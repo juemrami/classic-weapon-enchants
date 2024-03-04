@@ -9,6 +9,7 @@
     },
     "hide-files.files": [],
     "Lua.diagnostics.globals": [
-        "GameTooltip_Hide"
+        "GameTooltip_Hide",
+        "LE_ITEM_QUALITY_COMMON"
     ]
 }
