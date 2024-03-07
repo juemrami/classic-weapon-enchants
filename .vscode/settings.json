@@ -11,5 +11,13 @@
     "Lua.diagnostics.globals": [
         "GameTooltip_Hide",
         "LE_ITEM_QUALITY_COMMON"
+        "SecureHandlerSetFrameRef",
+        "NUM_BAG_FRAMES",
+        "QuestInfo_GetRewardButton",
+        "QuestInfoFrame",
+        "ADDON_ACTION_FORBIDDEN",
+        "StaticPopupDialogs",
+        "WorldFrame",
+        "SecureHandler_OnSimpleEvent"
     ]
 }
