@@ -10,7 +10,7 @@
     "hide-files.files": [],
     "Lua.diagnostics.globals": [
         "GameTooltip_Hide",
-        "LE_ITEM_QUALITY_COMMON"
+        "xx",
         "SecureHandlerSetFrameRef",
         "NUM_BAG_FRAMES",
         "QuestInfo_GetRewardButton",
@@ -18,6 +18,10 @@
         "ADDON_ACTION_FORBIDDEN",
         "StaticPopupDialogs",
         "WorldFrame",
-        "SecureHandler_OnSimpleEvent"
+        "SecureHandler_OnSimpleEvent",
+        "CreateFramePool",
+        "SecureHandlerExecute",
+        "SetItemButtonCount",
+        "LE_ITEM_QUALITY_COMMON"
     ]
 }
