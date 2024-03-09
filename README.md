@@ -11,3 +11,10 @@
 </div>
 <!-- ![gif](https://i.imgur.com/GbFFotd.gif) -->
   
+## Limited Combat Support:
+
+Because these actions are all protected (casting a spell/using an item) durring combat, the addon (any any others like it) can be limited at times.
+
+Typically you shouldn't notice any bugs durring normal use
+
+For now im not handling the edge case of getting new weapon enchant items while in combat, so if you get a new item/enchant while in combat you will have to wait until you are out of combat to see it in the flyout.
