@@ -161,8 +161,9 @@ function SecureResizeLayout:New(name, parent)
                     if row == 1 then
                         relativeTo = flyout
                         relativePoint = "BOTTOMLEFT"
-                        xOffset =  horizontalPadding
-                        yOffset =  verticalPadding
+                        -- pixel perfect tweaks
+                        xOffset =  1 + horizontalPadding
+                        yOffset =  1 + verticalPadding
                     end
 
                     child:SetPoint("BOTTOMLEFT", relativeTo, relativePoint, xOffset, yOffset)
@@ -178,7 +179,7 @@ function SecureResizeLayout:New(name, parent)
                 end
             end
         end;
-        ]=]):format(childrenPerRow, horizontalSpacing or 2, verticalSpacing or 2, self.widthPadding or horizontalPadding, self.heightPadding or verticalPadding)
+        ]=]):format(childrenPerRow, horizontalSpacing, verticalSpacing, self.widthPadding or horizontalPadding, self.heightPadding or verticalPadding)
         print("script made")
         self.layoutChildrenScript = script
     end

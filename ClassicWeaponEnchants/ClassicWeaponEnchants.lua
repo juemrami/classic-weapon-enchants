@@ -90,29 +90,36 @@ local tempEnchantSpells = {
 }
 
 local FALLBACK_ICON = 136242
--- for 2H classes whenever i add weaponstones & oils
 local playerHasOffhand = IsDualWielding
-local MAX_ROW_BUTTONS = 6 -- todo: add multiple rows for more buttons
-local MAX_ROWS = 4
-local MAX_BUTTONS = MAX_ROW_BUTTONS * MAX_ROWS
+local MAX_LINES = 2
 local BUTTON_X_SPACING = 4
 local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
+local FLYOUT_DIRECTION = "UP"
 local hideDelay = 2 -- seconds
-local benchmarkCache = {
-  ["ButtonRefresh"] = {},
-  ["FlyoutFrame_UpdateChildren"] = {}
-}
+
 --- helper function for sorting by ilvl
 local function getItemLevel(itemID)
   return select(4, GetItemInfo(itemID)) or 0
 end
+local function areFramesOverlapping(frame1, frame2)
+  local left1, bottom1, width1, height1 = frame1:GetRect()
+  local left2, bottom2, width2, height2 = frame2:GetRect()
+  return not (
+    left1 + width1 < left2 
+    or left2 + width2 < left1 
+    or bottom1 + height1 < bottom2 
+    or bottom2 + height2 < bottom1 
+  )
+end 
 
 local ADDON_ID = "ClassicWeaponEnchants"
+assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
 local BASE_BUTTON_ID = ADDON_ID .. "Button"
 local MAIN_BUTTON_SIZE = 35 -- square
 ---@class Addon : Frame
 local addon = CreateFrame("Frame", ADDON_ID, UIParent, "SecureHandlerBaseTemplate");
+-- addon:SetFrameLevel(_G["MultiBarBottomLeftButton1"]:GetFrameLevel() + 1);
 --[[
   Hover Icon Frame aka the Flyout "toggle".
   ]]
@@ -123,6 +130,7 @@ FlyoutButton.Highlight = FlyoutButton:CreateTexture(nil, "BACKGROUND", nil, 2)
 FlyoutButton.Border = FlyoutButton:CreateTexture(nil, "OVERLAY", nil, 1)
 FlyoutButton.BorderShadow = FlyoutButton:CreateTexture(nil, "OVERLAY", nil, 1)
 FlyoutButton.FlyoutArrow = FlyoutButton:CreateTexture(nil, "OVERLAY", nil, 2)
+
 
 function FlyoutButton:Init()
   self:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
@@ -168,18 +176,29 @@ function FlyoutButton:Init()
   self.FlyoutArrow:Show()
 
   --- Make Toggle draggable
-  self:SetMovable(true)
-  self:EnableMouse(true)
-  self:RegisterForDrag(dragMouseButton)
+  self:SetMovable(true);
+  self:EnableMouse(true);
+  self:RegisterForDrag(dragMouseButton);
+  self:SetUserPlaced(true);
+  local hideTooltipOnOverlap = function()
+    if GameTooltip:IsShown() and areFramesOverlapping(FlyoutButton, GameTooltip) then
+      C_Timer.After(0.25, GameTooltip_Hide)
+    end
+  end     
   self:SetScript("OnDragStart", function(self)
     self:StartMoving()
-  end)
+    self:SetScript("OnUpdate", hideTooltipOnOverlap)
+  end);
   self:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
-  end)
-  return self
-end
+    self:SetScript("OnUpdate", nil)
+  end);
 
+  -- fix to hide tooltip whenever toggle is overlapping it.
+  self:SetClampedToScreen(true)
+  return self
+
+end
 --- preserve og if ever using an actually button
 local setEnabled = FlyoutButton.SetEnabled
 function FlyoutButton:SetEnabled(enable)
@@ -204,6 +223,29 @@ end
 
 function FlyoutButton:IsEnabled()
   return self.isEnabled
+end
+
+function FlyoutButton:LoadSavedVars()
+  ---@type ClassicWeaponEnchantsDB
+ assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found. Ensure saved variables are loaded before calling this function.") 
+  if self.savedVarsLoaded then return end
+  -- load saved position
+  local pos = ClassicWeaponEnchantsDB.ToggleOptions.position
+  if pos.x  == 0 and pos.y == 0 then
+    self:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+  else
+    self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pos.x, pos.y)
+  end
+  -- add script to save position on move
+  addon.FlyoutButton:HookScript("OnDragStop", function(self)
+    -- local _, _, _, x, y = self:GetPoint()
+    -- print(x,y)
+    ---@cast self Frame
+    local x, y = self:GetRect()
+    ClassicWeaponEnchantsDB.ToggleOptions.position.x = x
+    ClassicWeaponEnchantsDB.ToggleOptions.position.y = y
+  end)
+  self.savedVarsLoaded = true
 end
 
 ---@param shown boolean is flyout shown
@@ -244,12 +286,46 @@ addon.FlyoutFrame:SetBackdropColor(0, 0, 0, 0.9)
 ---@diagnostic disable-next-line: undefined-field
 addon.FlyoutFrame:SetBackdropBorderColor(0.75, 0.75, 0.75, 0.85)
 
-addon.FlyoutFrame:SetChildrenLayout(MAX_ROW_BUTTONS, BUTTON_X_SPACING, BUTTON_Y_SPACING, LAYOUT_HORIZONTAL_PADDING, LAYOUT_VERTICAL_PADDING)
+--- hacky flyout direction stufff
+local configs = {
+  ["UP"] = {
+    point = "BOTTOM",
+    relativePoint = "TOP",
+    x = 0,
+    y = BUTTON_Y_SPACING - 1,
+  },
+  ["DOWN"] = {
+    point = "TOP",
+    relativePoint = "BOTTOM",
+    x = 0,
+    y = -BUTTON_Y_SPACING
+  },
+  ["LEFT"] = {
+    point = "RIGHT",
+    relativePoint = "LEFT",
+    x = -BUTTON_X_SPACING + 1,
+    y = 0,
+    setConstants = function(self)
+      MAX_LINES = 6
+    end
+  },
+  ["RIGHT"] = {
+    point = "LEFT",
+    relativePoint = "RIGHT",
+    x = BUTTON_X_SPACING,
+    y = 0
+  }
+}
+local config = configs[FLYOUT_DIRECTION]
+if config.setConstants then config.setConstants() end
+addon.FlyoutFrame:SetPoint(config.point, addon.FlyoutButton,config.relativePoint, config.x, config.y)
+addon.FlyoutFrame:SetClampedToScreen(true)
+
+addon.FlyoutFrame:SetChildrenLayout(MAX_LINES, BUTTON_X_SPACING, BUTTON_Y_SPACING, LAYOUT_HORIZONTAL_PADDING, LAYOUT_VERTICAL_PADDING)
 ---@diagnostic disable-next-line: inject-field
 addon.FlyoutFrame.widthPadding = LAYOUT_HORIZONTAL_PADDING
 ---@diagnostic disable-next-line: undefined-field
 addon.FlyoutFrame:SetHeightPadding(LAYOUT_VERTICAL_PADDING)
-addon.FlyoutFrame:SetPoint("BOTTOMLEFT", addon.FlyoutButton, "TOPLEFT", 0, BUTTON_Y_SPACING - 1)
 addon.FlyoutFrame:Hide()
 
 
@@ -554,20 +630,18 @@ local FlyoutFrame_UpdateButtons = function(self)
       -- this however will not update the internal active/inactive tables of the pool so that should be done explicilty until the pool is reimplemented.
     end
   end
-  -- This is required after you're done laying out your contents; on the
-  -- end of the current game tick (OnUpdate) the Layout method provided
-  -- by ResizeLayoutMixin will be called which will resize this frame to
-  -- the total extents of all child regions.
-  self:MarkDirty()
-  if not InCombatLockdown() then
-    ---@diagnostic disable-next-line: undefined-field
-    self:Execute(self.layoutChildrenScript)
-    ---@diagnostic disable-next-line: undefined-field
-    self:Execute(self.resizeFrameScript)
+  -- this needs to be cleaned up. 
+  if #buttonInfo > 0 then
+    self:MarkDirty()
+    if not InCombatLockdown() then
+      ---@diagnostic disable-next-line: undefined-field
+      self:Execute(self.layoutChildrenScript)
+      ---@diagnostic disable-next-line: undefined-field
+      self:Execute(self.resizeFrameScript)
+    end
   end
   addon.FlyoutFrame:BenchMarkStop("FlyoutFrame_UpdateButtons")
   addon.FlyoutFrame:BenchMarkPrint("FlyoutFrame_UpdateButtons")
-
 end
 --- note that OnShow is only called when the frame was previously hidden.
 addon.FlyoutFrame:HookScript("OnAttributeChanged",
@@ -791,8 +865,8 @@ addon.FlyoutButton:HookScript("OnEnter", function(self)
   -- self:RefreshButtonInfo()
   GameTooltip:SetOwner(self, "ANCHOR_NONE")
   if self:IsEnabled() then
-    GameTooltip:SetPoint("TOPLEFT", self, "TOPRIGHT", 3, 0)
-    GameTooltip:SetText("Left-click an enchant to apply to main-hand.\nRight-click to apply to off-hand.")
+    -- GameawwTooltip:SetPoint("TOPLEFT", self, "TOPRIGHT", 3, 0)
+    -- GameTooltip:SetText("Left-click an enchant to apply to main-hand.\nRight-click to apply to off-hand.")
     FlyoutButtonHoverTextures_SetActiveState(true)
   else
     assert(HideFlyoutButtonOnShiftRightClick, "HideFlyoutButtonOnShiftRightClick script should be defined")
@@ -815,6 +889,7 @@ addon:RegisterEvent("PLAYER_ENTERING_WORLD")
 addon:RegisterEvent("SPELLS_CHANGED")
 addon:RegisterEvent("PLAYER_REGEN_DISABLED")
 addon:RegisterEvent("PLAYER_REGEN_ENABLED")
+addon:RegisterEvent("ADDON_LOADED")
 local debounceTimeout = 0.5 -- seconds
 local debounceTimer; ---@type cbObject?
 local debounce = function(event, callback, timeout)
@@ -858,18 +933,74 @@ end
 -- call this once on load incase player is in combat.
 refreshAndUpdateButtons()
 
-addon:HookScript("OnEvent", function(self, event)
-  if BUTTON_UPDATE_EVENTS[event] then
-    -- only debounce when the flyout is hidden.
-    if not addon.FlyoutFrame:IsVisible() then
-      debounce(event, refreshAndUpdateButtons, debounceTimeout)
-    else -- if its open we want to see any changes immediately.
-      refreshAndUpdateButtons()
+local setupSavedVariables = function()
+  ---@class ClassicWeaponEnchantsDB
+  ---@field mode "hover"|"toggle"
+  local defaultOptions = { 
+    ToggleOptions = { 
+      position = {x = 0, y = 0},
+      hidden = false,
+      mode = "hover"
+    },
+    FlyoutOptions = {
+      maxPerRow = 4,
+      hideDelay = 0.25
+    }
+  }
+  local function validateTable(old, new, keepMissing)
+    -- add any missing keys and assert types for old table.
+    for key, default in pairs(new) do
+      if not old[key] 
+      or type(old[key]) ~= type(default)
+      then
+        old[key] = default
+      elseif type(default) == "table" then
+        validateTable(old[key], default)
+      end
     end
-  elseif event == "PLAYER_REGEN_DISABLED" then
-    print("in combat")
-    addon.FlyoutFrame:ForceResize()
-  elseif event == "PLAYER_REGEN_ENABLED" then
-    print("out of combat")
+    if keepMissing then
+      return old
+    end
+    -- remove any keys that are not in the new table
+    for key, _ in pairs(old) do
+      if not new[key] then
+        old[key] = nil
+      elseif type(new[key]) == "table" then
+        validateTable(old[key], new[key])
+      end
+    end
+    return old
   end
-end)
+  local savedVars = ClassicWeaponEnchantsDB or defaultOptions
+  -- validate saved variables w/ default options table
+  savedVars = validateTable(savedVars, defaultOptions)
+  -- update global refrence to match validated vars
+  ---@type ClassicWeaponEnchantsDB
+  ClassicWeaponEnchantsDB = savedVars
+end
+
+addon:HookScript("OnEvent", 
+  function(self, event, ...)
+    if BUTTON_UPDATE_EVENTS[event] then
+      -- only debounce when the flyout is hidden.
+      if not addon.FlyoutFrame:IsVisible() then
+        debounce(event, refreshAndUpdateButtons, debounceTimeout)
+      else -- if its open we want to see any changes immediately.
+        refreshAndUpdateButtons()
+      end
+      if event == "PLAYER_ENTERING_WORLD" then
+        setupSavedVariables()
+        addon.FlyoutButton:LoadSavedVars()
+      end
+    elseif event == "PLAYER_REGEN_DISABLED" then
+      print("in combat")
+      addon.FlyoutFrame:ForceResize()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+      print("out of combat")
+    elseif event == "ADDON_LOADED" 
+      and  ADDON_ID == ...
+    then
+      setupSavedVariables()
+      addon.FlyoutButton:LoadSavedVars()
+    end
+  end)

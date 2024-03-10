@@ -10,6 +10,17 @@
 <img width="80%" src="https://i.imgur.com/GbFFotd.gif">
 </div>
 <!-- ![gif](https://i.imgur.com/GbFFotd.gif) -->
+
+## Todo:
+
+- [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
+ - Flyout direction
+ - Flyout Toggle Mode (Click/Hover)
+ - Hide delay duration on hover mode
+ - add a "Hide" option to completely hide the flyout toggle
+- [ ] Add support or additional flyout directions.
+- [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
+
   
 ## Limited Combat Support:
 
