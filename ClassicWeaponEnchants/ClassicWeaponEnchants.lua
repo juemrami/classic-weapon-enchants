@@ -95,7 +95,7 @@ local MAX_LINES = 2
 local BUTTON_X_SPACING = 4
 local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
-local FLYOUT_DIRECTION = "UP"
+local FLYOUT_DIRECTION = "RIGHT"
 local hideDelay = 2 -- seconds
 
 --- helper function for sorting by ilvl
@@ -172,7 +172,21 @@ function FlyoutButton:Init()
   self.FlyoutArrow:SetTexture([[Interface\Buttons\ActionBarFlyoutButton]])
   self.FlyoutArrow:SetTexCoord(0.625, 0.984375, 0.7421875, 0.828125)
   self.FlyoutArrow:SetSize(MAIN_BUTTON_SIZE / (1.83), MAIN_BUTTON_SIZE / (3.82))
-  self.FlyoutArrow:SetPoint("CENTER", self.Border, "TOP", 0, 2)
+
+  local arrowOfffset = 2
+  if (FLYOUT_DIRECTION == "LEFT") then
+    SetClampedTextureRotation(self.FlyoutArrow, 270);
+    self.FlyoutArrow:SetPoint("CENTER", self.Border, "LEFT", -arrowOfffset, 0);
+  elseif (FLYOUT_DIRECTION == "RIGHT") then
+    SetClampedTextureRotation(self.FlyoutArrow, 90);
+    self.FlyoutArrow:SetPoint("CENTER", self.Border, "RIGHT", arrowOfffset, 0);
+  elseif (FLYOUT_DIRECTION == "DOWN") then
+    SetClampedTextureRotation(self.FlyoutArrow, 180);
+    self.FlyoutArrow:SetPoint("CENTER", self.Border, "BOTTOM", 0, -arrowOfffset);
+  else -- UP
+    SetClampedTextureRotation(self.FlyoutArrow, 0);
+    self.FlyoutArrow:SetPoint("CENTER", self.Border, "TOP", 0, arrowOfffset);
+  end
   self.FlyoutArrow:Show()
 
   --- Make Toggle draggable
@@ -306,14 +320,17 @@ local configs = {
     x = -BUTTON_X_SPACING + 1,
     y = 0,
     setConstants = function(self)
-      MAX_LINES = 6
+      MAX_LINES = 8
     end
   },
   ["RIGHT"] = {
     point = "LEFT",
     relativePoint = "RIGHT",
     x = BUTTON_X_SPACING,
-    y = 0
+    y = 0,
+    setConstants = function(self)
+      MAX_LINES = 8
+    end
   }
 }
 local config = configs[FLYOUT_DIRECTION]
