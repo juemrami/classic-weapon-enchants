@@ -180,7 +180,6 @@ function SecureResizeLayout:New(name, parent)
             end
         end;
         ]=]):format(childrenPerRow, horizontalSpacing, verticalSpacing, self.widthPadding or horizontalPadding, self.heightPadding or verticalPadding)
-        print("script made")
         self.layoutChildrenScript = script
     end
     function frame:SetFrameRef(name, frame)

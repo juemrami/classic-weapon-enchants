@@ -90,15 +90,22 @@ local tempEnchantSpells = {
 }
 
 local FALLBACK_ICON = 136242
-local playerHasOffhand = IsDualWielding
 local MAX_LINES = 2
 local BUTTON_X_SPACING = 4
 local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
 local FLYOUT_DIRECTION = "RIGHT"
 local hideDelay = 2 -- seconds
+local DEBUG = false
+local ADDON_ID = "ClassicWeaponEnchants"
+assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
+local BASE_BUTTON_ID = ADDON_ID .. "Button"
+local MAIN_BUTTON_SIZE = 35 -- square
 
---- helper function for sorting by ilvl
+
+--- helper functions
+local playerHasOffhand = IsDualWielding
+
 local function getItemLevel(itemID)
   return select(4, GetItemInfo(itemID)) or 0
 end
@@ -113,13 +120,19 @@ local function areFramesOverlapping(frame1, frame2)
   )
 end 
 
-local ADDON_ID = "ClassicWeaponEnchants"
-assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
-local BASE_BUTTON_ID = ADDON_ID .. "Button"
-local MAIN_BUTTON_SIZE = 35 -- square
+local debugHeader = AZERITE_ESSENCE_COLOR:WrapTextInColorCode("["..ADDON_ID.."]: ")
+local print = function(...)
+  if DEBUG then
+    _G.print(debugHeader, ...)
+  end
+end
+
+--- 
+
 ---@class Addon : Frame
 local addon = CreateFrame("Frame", ADDON_ID, UIParent, "SecureHandlerBaseTemplate");
 -- addon:SetFrameLevel(_G["MultiBarBottomLeftButton1"]:GetFrameLevel() + 1);
+
 --[[
   Hover Icon Frame aka the Flyout "toggle".
   ]]
@@ -953,7 +966,8 @@ refreshAndUpdateButtons()
 local setupSavedVariables = function()
   ---@class ClassicWeaponEnchantsDB
   ---@field mode "hover"|"toggle"
-  local defaultOptions = { 
+  local defaultOptions = {
+    debug = false, 
     ToggleOptions = { 
       position = {x = 0, y = 0},
       hidden = false,
@@ -994,6 +1008,7 @@ local setupSavedVariables = function()
   -- update global refrence to match validated vars
   ---@type ClassicWeaponEnchantsDB
   ClassicWeaponEnchantsDB = savedVars
+  return ClassicWeaponEnchantsDB
 end
 
 addon:HookScript("OnEvent", 
@@ -1019,5 +1034,6 @@ addon:HookScript("OnEvent",
     then
       setupSavedVariables()
       addon.FlyoutButton:LoadSavedVars()
+      DEBUG = ClassicWeaponEnchantsDB.debug
     end
   end)

@@ -11,21 +11,29 @@
 </div>
 <!-- ![gif](https://i.imgur.com/GbFFotd.gif) -->
 
+## Usage:
+
+  1. Hover over the toggle button to open the flyout menu
+
+  2. Click
+  - **Left-click**: Apply the selected enchant to the main hand weapon
+  - **Right-click**: Apply the selected enchant to the off-hand weapon
+
 ## Todo:
 
 - [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
- - Flyout direction
- - Flyout Toggle Mode (Click/Hover)
- - Hide delay duration on hover mode
- - add a "Hide" option to completely hide the flyout toggle
-- [ ] Add support or additional flyout directions.
+  - [ ] Flyout direction
+  - [ ] Flyout Toggle Mode (Click/Hover)
+  - [ ] Hide delay duration on hover mode
+  - [ ] add a "Hide" option to completely hide the flyout toggle
+- [x] Add support or additional flyout directions.
+  - *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
+  - [ ] Fix the icon organization for the new directions
 - [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
 
   
 ## Limited Combat Support:
 
-Because these actions are all protected (casting a spell/using an item) durring combat, the addon (any any others like it) can be limited at times.
-
-Typically you shouldn't notice any bugs durring normal use
+Because these actions are all protected (casting a spell/using an item), during combat the addon's functionality may be limited.
 
 For now im not handling the edge case of getting new weapon enchant items while in combat, so if you get a new item/enchant while in combat you will have to wait until you are out of combat to see it in the flyout.

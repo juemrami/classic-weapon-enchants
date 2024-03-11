@@ -22,6 +22,7 @@
         "CreateFramePool",
         "SecureHandlerExecute",
         "SetItemButtonCount",
+        "AZERITE_ESSENCE_COLOR",
         "LE_ITEM_QUALITY_COMMON"
     ]
 }
