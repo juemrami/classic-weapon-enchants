@@ -1,3 +1,2 @@
-*.zip
-/.release/
-.pkgmeta
+/.release/*
+!/.release/release.sh

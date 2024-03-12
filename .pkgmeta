@@ -1,0 +1,4 @@
+package-as: ClassicWeaponEnchants
+
+move-folders:
+    ClassicWeaponEnchants/ClassicWeaponEnchants: ClassicWeaponEnchants
