@@ -21,6 +21,22 @@
 
   **Supports Season of Discovery ✔️**
 
+### Slash Commands
+format: `/cwa {command} {arg}`
+  - `show` - Shows the flyout toggle
+  - `hide` - Hides the flyout toggle
+  - `reset` - Resets the flyout menu to its default position
+  - `direction` - Sets the direction of the flyout menu
+    - `up` - Flyout menu will appear above the toggle button
+    - `down` - Flyout menu will appear below the toggle button
+    - `left` - Flyout menu will appear to the left of the toggle button
+    - `right` - Flyout menu will appear to the right of the toggle button
+  - `lines` - Sets the number of lines in the flyout menu
+    - `1` - Flyout menu will have 1 line (default)
+    - `2` - Flyout menu will have 2 lines
+    - `3` - Flyout menu will have 3 lines (pictured)
+  - `debug` - Toggles debug mode
+
 ## Todo:
 
 - [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
