@@ -4,31 +4,9 @@ local ADDON_ID = "ClassicWeaponEnchants"
 local SecureResizeLayout = {}
 function SecureResizeLayout:New(name, parent)
     ---@class SecureResizeLayout : Frame
-    local frame = CreateFrame("Frame", name, parent, "SecureHandlerShowHideTemplate, BackdropTemplate, SecureHandlerBaseTemplate")
+    local frame = CreateFrame("Frame", name, parent, "BackdropTemplate, SecureHandlerShowHideTemplate")
     frame.ignoreInLayout = {}
     assert(frame.Show, "Show is not defined")
-    function frame:_DebugLine(edge, frameName)
-        local line = _G[frameName.."Line"]
-        or _G[frameName]:CreateLine(frameName.."Line")
-        ---@cast line Line
-        line:SetColorTexture(1, 0, 0, 1)
-        line:SetDrawLayer("OVERLAY", 1)
-        if edge == "LEFT" then
-            line:SetStartPoint("TOPLEFT", frameName)
-            line:SetEndPoint("BOTTOMLEFT", frameName)
-        elseif edge == "RIGHT" then
-            line:SetStartPoint("TOPRIGHT", frameName)
-            line:SetEndPoint("BOTTOMRIGHT", frameName)
-        elseif edge == "TOP" then
-            line:SetStartPoint("TOPLEFT", frameName)
-            line:SetEndPoint("TOPRIGHT", frameName)
-        elseif edge == "BOTTOM" then
-            line:SetStartPoint("BOTTOMLEFT", frameName)
-            line:SetEndPoint("BOTTOMRIGHT", frameName)
-        end
-        line:SetThickness(2)
-        line:Show()
-    end
     function frame:DebugLine(name, x1, y1, x2, y2)
         local line = _G[name] or self:CreateLine(name)
         ---@cast line Line
@@ -54,7 +32,6 @@ function SecureResizeLayout:New(name, parent)
         local script = ([=[
         -- self == layout
         -- steps in determining size:
-        
         -- get all children.
         local children = newtable();
         self:GetChildList(children);
@@ -104,7 +81,7 @@ function SecureResizeLayout:New(name, parent)
             end
         end
         if not (minLeft and maxRight and maxTop and minBot) then
-            print("No children for flyout being shown. Not ReHiding")
+            -- print("No children for flyout being shown. Not ReHiding")
             self:Hide() -- no children, hide flyout 
             return;
         end
@@ -121,7 +98,10 @@ function SecureResizeLayout:New(name, parent)
         frame:SetAttribute("_onshow", script)
     end
     function frame:ForceResize()
-        self:ExecuteAttribute("_onshow")
+        if true then
+---@diagnostic disable-next-line: undefined-field
+            self:Execute(self:GetAttribute("_onshow"))
+        end
     end
     ---@param childrenPerRow number
     ---@param horizontalSpacing number

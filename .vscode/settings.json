@@ -23,6 +23,17 @@
         "SecureHandlerExecute",
         "SetItemButtonCount",
         "AZERITE_ESSENCE_COLOR",
-        "LE_ITEM_QUALITY_COMMON"
+        "LE_ITEM_QUALITY_COMMON",
+        "SlashCmdList",
+        "DEFAULT_CHAT_FRAME",
+        "UIDropDownMenu_CreateInfo",
+        "GameFontHighlightSmall",
+        "VIDEO_QUALITY_LABEL6",
+        "PET_BATTLE_COMBAT_LOG_DAMAGE_WEAK",
+        "PET_BATTLE_COMBAT_LOG_DAMAGE_STRONG",
+        "STATUS_TEXT_BOTH",
+        "ACTION_SPELL_AURA_APPLIED_DOSE",
+        "UnitDebuff",
+        "HEALTH_COST_PCT"
     ],
 }

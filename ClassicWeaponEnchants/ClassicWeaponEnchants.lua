@@ -90,11 +90,12 @@ local tempEnchantSpells = {
 }
 
 local FALLBACK_ICON = 136242
-local MAX_LINES = 2
+-- todo: refactor this num buttons stuff.
+-- this terminology only makes sense for horizontal layouts. (left/right)
+-- note: for the "UP" and "DOWN", to make the make the button stack vertically, im setting the number of rows to an arbirtatrily high number (32) that a user will never realistically have this many. to trigger a 2nd column from being created. This is not ideal, and immediate improvement is just just pick the nearest 2^n number to the number of buttons required for the flyout.
 local BUTTON_X_SPACING = 4
 local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
-local FLYOUT_DIRECTION = "RIGHT"
 local hideDelay = 2 -- seconds
 local DEBUG = false
 local ADDON_ID = "ClassicWeaponEnchants"
@@ -126,12 +127,36 @@ local print = function(...)
     _G.print(debugHeader, ...)
   end
 end
-
+local hooks = {}
+local Frame_OnNextEvent = function(frame, event, callback, ...)
+  ---@cast frame Frame
+  assert(C_EventUtils.IsEventValid(event), "Event is not valid.")
+  local firstRegister = not frame:IsEventRegistered(event)
+  if firstRegister then
+    frame:RegisterEvent(event)
+  end
+  local callbackArgs = { ... }
+  local _hooks = hooks[frame] or 0
+  hooks[frame] = _hooks + 1
+  frame:HookScript("OnEvent", function(self, _event, ...)
+    if _event == event then
+      if #callbackArgs > 0 then
+        callback(table.unpack(callbackArgs), ...)
+      else
+        callback(...)
+      end
+      if firstRegister then
+        frame:UnregisterEvent(event)
+      end
+    end
+  end)
+  print("Num hooks for ", frame:GetName() or "nil", " :", _hooks)
+end
 --- 
 
 ---@class Addon : Frame
 local addon = CreateFrame("Frame", ADDON_ID, UIParent, "SecureHandlerBaseTemplate");
--- addon:SetFrameLevel(_G["MultiBarBottomLeftButton1"]:GetFrameLevel() + 1);
+
 
 --[[
   Hover Icon Frame aka the Flyout "toggle".
@@ -185,22 +210,9 @@ function FlyoutButton:Init()
   self.FlyoutArrow:SetTexture([[Interface\Buttons\ActionBarFlyoutButton]])
   self.FlyoutArrow:SetTexCoord(0.625, 0.984375, 0.7421875, 0.828125)
   self.FlyoutArrow:SetSize(MAIN_BUTTON_SIZE / (1.83), MAIN_BUTTON_SIZE / (3.82))
-
-  local arrowOfffset = 2
-  if (FLYOUT_DIRECTION == "LEFT") then
-    SetClampedTextureRotation(self.FlyoutArrow, 270);
-    self.FlyoutArrow:SetPoint("CENTER", self.Border, "LEFT", -arrowOfffset, 0);
-  elseif (FLYOUT_DIRECTION == "RIGHT") then
-    SetClampedTextureRotation(self.FlyoutArrow, 90);
-    self.FlyoutArrow:SetPoint("CENTER", self.Border, "RIGHT", arrowOfffset, 0);
-  elseif (FLYOUT_DIRECTION == "DOWN") then
-    SetClampedTextureRotation(self.FlyoutArrow, 180);
-    self.FlyoutArrow:SetPoint("CENTER", self.Border, "BOTTOM", 0, -arrowOfffset);
-  else -- UP
-    SetClampedTextureRotation(self.FlyoutArrow, 0);
-    self.FlyoutArrow:SetPoint("CENTER", self.Border, "TOP", 0, arrowOfffset);
-  end
+  self.FlyoutArrow:SetPoint("CENTER", self.Border, "TOP", 0, 2);
   self.FlyoutArrow:Show()
+  SetClampedTextureRotation(self.FlyoutArrow, 0);
 
   --- Make Toggle draggable
   self:SetMovable(true);
@@ -223,6 +235,8 @@ function FlyoutButton:Init()
 
   -- fix to hide tooltip whenever toggle is overlapping it.
   self:SetClampedToScreen(true)
+
+  -- self:SetFrameLevel(_G["MultiBarBottomLeftButton1"]:GetFrameLevel() + 1);
   return self
 
 end
@@ -254,25 +268,28 @@ end
 
 function FlyoutButton:LoadSavedVars()
   ---@type ClassicWeaponEnchantsDB
- assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found. Ensure saved variables are loaded before calling this function.") 
-  if self.savedVarsLoaded then return end
-  -- load saved position
-  local pos = ClassicWeaponEnchantsDB.ToggleOptions.position
-  if pos.x  == 0 and pos.y == 0 then
-    self:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
-  else
-    self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pos.x, pos.y)
+  assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found. Ensure saved variables are loaded before calling this function.") 
+    -- load saved position
+    self:ClearAllPoints()
+    local pos = ClassicWeaponEnchantsDB.ToggleOptions.position
+    if pos.x == 0 and pos.y == 0 then
+      self:SetPoint("CENTER", UIParent, "CENTER")
+    else
+      self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pos.x, pos.y)
+    end
+    -- add script to save position on move
+  if not self.updateFuncHooked then 
+    addon.FlyoutButton:HookScript("OnDragStop", function(self)
+      -- local _, _, _, x, y = self:GetPoint()
+      -- print(x,y)
+      ---@cast self Frame
+      local x, y = self:GetRect()
+      ClassicWeaponEnchantsDB.ToggleOptions.position.x = x
+      ClassicWeaponEnchantsDB.ToggleOptions.position.y = y
+    end)
+    self.updateFuncHooked = true
   end
-  -- add script to save position on move
-  addon.FlyoutButton:HookScript("OnDragStop", function(self)
-    -- local _, _, _, x, y = self:GetPoint()
-    -- print(x,y)
-    ---@cast self Frame
-    local x, y = self:GetRect()
-    ClassicWeaponEnchantsDB.ToggleOptions.position.x = x
-    ClassicWeaponEnchantsDB.ToggleOptions.position.y = y
-  end)
-  self.savedVarsLoaded = true
+  self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
 end
 
 ---@param shown boolean is flyout shown
@@ -313,8 +330,7 @@ addon.FlyoutFrame:SetBackdropColor(0, 0, 0, 0.9)
 ---@diagnostic disable-next-line: undefined-field
 addon.FlyoutFrame:SetBackdropBorderColor(0.75, 0.75, 0.75, 0.85)
 
---- hacky flyout direction stufff
-local configs = {
+local flyoutConfigs = {
   ["UP"] = {
     point = "BOTTOM",
     relativePoint = "TOP",
@@ -325,37 +341,68 @@ local configs = {
     point = "TOP",
     relativePoint = "BOTTOM",
     x = 0,
-    y = -BUTTON_Y_SPACING
+    y = -BUTTON_Y_SPACING,
   },
   ["LEFT"] = {
     point = "RIGHT",
     relativePoint = "LEFT",
     x = -BUTTON_X_SPACING + 1,
     y = 0,
-    setConstants = function(self)
-      MAX_LINES = 8
-    end
   },
   ["RIGHT"] = {
     point = "LEFT",
     relativePoint = "RIGHT",
     x = BUTTON_X_SPACING,
     y = 0,
-    setConstants = function(self)
-      MAX_LINES = 8
-    end
   }
 }
-local config = configs[FLYOUT_DIRECTION]
-if config.setConstants then config.setConstants() end
-addon.FlyoutFrame:SetPoint(config.point, addon.FlyoutButton,config.relativePoint, config.x, config.y)
-addon.FlyoutFrame:SetClampedToScreen(true)
+function addon.FlyoutFrame:UpdateDirection()
+  --- todo refactor
+  -- if this is called before button info is available then assume a state with 32 buttons.
+  local numButtons = addon.GetNumButtons and addon:GetNumButtons() or 32
+  local wasShown = addon.FlyoutFrame:IsVisible()
+  local direction = ClassicWeaponEnchantsDB and ClassicWeaponEnchantsDB.FlyoutOptions.direction or "UP"
+  local NUM_LINES = ClassicWeaponEnchantsDB and ClassicWeaponEnchantsDB.FlyoutOptions.numLines or 1
+  local config = flyoutConfigs[direction]
+  addon.FlyoutFrame:Hide()
+  addon.FlyoutFrame:ClearAllPoints()
+  addon.FlyoutFrame:SetPoint(
+    config.point, addon.FlyoutButton, config.relativePoint, config.x, config.y
+  )
+  local arrowOfffset = 2
+  if (direction == "LEFT") then
+    SetClampedTextureRotation(addon.FlyoutButton.FlyoutArrow, 270);
+    addon.FlyoutButton.FlyoutArrow:SetPoint("CENTER", addon.FlyoutButton.Border, "LEFT", -arrowOfffset, 0);
+  elseif (direction == "RIGHT") then
+    SetClampedTextureRotation(addon.FlyoutButton.FlyoutArrow, 90);
+    addon.FlyoutButton.FlyoutArrow:SetPoint("CENTER", addon.FlyoutButton.Border, "RIGHT", arrowOfffset, 0);
+  elseif (direction == "DOWN") then
+    SetClampedTextureRotation(addon.FlyoutButton.FlyoutArrow, 180);
+    addon.FlyoutButton.FlyoutArrow:SetPoint("CENTER", addon.FlyoutButton.Border, "BOTTOM", 0, -arrowOfffset);
+  else -- UP
+    SetClampedTextureRotation(addon.FlyoutButton.FlyoutArrow, 0);
+    addon.FlyoutButton.FlyoutArrow:SetPoint("CENTER", addon.FlyoutButton.Border, "TOP", 0, arrowOfffset);
+  end
+  -- note: when using LEFT/RIGHT using NUM_BUTTONS is required to determine the number of children to use per row. When using UP/DOWN the number of children per row is always the numLines. ie numLines always control number of columns in the resulting layout. (no matter the orientation) 
+  local childrenPerRow
+  if direction == "UP" or direction == "DOWN" then
+    childrenPerRow = NUM_LINES
+  else
+    childrenPerRow = math.ceil(numButtons / NUM_LINES)
+  end
+  addon.FlyoutFrame:SetChildrenLayout(childrenPerRow, BUTTON_X_SPACING, BUTTON_Y_SPACING, LAYOUT_HORIZONTAL_PADDING, LAYOUT_VERTICAL_PADDING)
+  ---@diagnostic disable-next-line: inject-field
+  addon.FlyoutFrame.widthPadding = LAYOUT_HORIZONTAL_PADDING
+  ---@diagnostic disable-next-line: undefined-field
+  addon.FlyoutFrame:SetHeightPadding(LAYOUT_VERTICAL_PADDING)
 
-addon.FlyoutFrame:SetChildrenLayout(MAX_LINES, BUTTON_X_SPACING, BUTTON_Y_SPACING, LAYOUT_HORIZONTAL_PADDING, LAYOUT_VERTICAL_PADDING)
----@diagnostic disable-next-line: inject-field
-addon.FlyoutFrame.widthPadding = LAYOUT_HORIZONTAL_PADDING
----@diagnostic disable-next-line: undefined-field
-addon.FlyoutFrame:SetHeightPadding(LAYOUT_VERTICAL_PADDING)
+  if wasShown then
+    addon.FlyoutFrame:Show()
+  end
+end
+
+addon.FlyoutFrame:UpdateDirection()
+addon.FlyoutFrame:SetClampedToScreen(true)
 addon.FlyoutFrame:Hide()
 
 
@@ -388,27 +435,7 @@ end
 -----
 addon.hidden = CreateFrame("Frame", nil, addon, "SecureHandlerBaseTemplate")
 addon.hidden:Hide()
-local Frame_OnNextEvent = function(frame, event, callback, ...)
-  ---@cast frame Frame
-  assert(C_EventUtils.IsEventValid(event), "Event is not valid.")
-  local firstRegister = not frame:IsEventRegistered(event)
-  if firstRegister then
-    frame:RegisterEvent(event)
-  end
-  local callbackArgs = { ... }
-  frame:HookScript("OnEvent", function(self, _event, ...)
-    if _event == event then
-      if #callbackArgs > 0 then
-        callback(table.unpack(callbackArgs), ...)
-      else
-        callback(...)
-      end
-      if firstRegister then
-        frame:UnregisterEvent(event)
-      end
-    end
-  end)
-end
+
 -- called once when a new button is added to the pool.
 local buttonInitializer = function(button)
   ---@class FlyoutEnchantButton : Button
@@ -829,12 +856,29 @@ hooksecurefunc(addon, "RefreshButtonInfo", function(self, skipBags)
   addon.FlyoutFrame:BenchMarkPrint("RefreshButtonInfo")
 end)
 
+
+local numButtons = 0
 function addon:GetButtonInfo()
   if self.refreshButtonCache or not self.cachedButtonInfo then
     self:RefreshButtonInfo()
     self.refreshButtonCache = false
   end
+  local newSize = #self.cachedButtonInfo
+  if numButtons ~= newSize then
+    numButtons = newSize
+
+    if InCombatLockdown() then
+      Frame_OnNextEvent(addon, "PLAYER_REGEN_ENABLED", function()
+        addon.FlyoutFrame:UpdateDirection();
+      end)
+    else 
+      addon.FlyoutFrame:UpdateDirection();
+    end
+  end
   return self.cachedButtonInfo
+end
+function addon:GetNumButtons()
+  return numButtons
 end
 
 --[[
@@ -963,21 +1007,22 @@ end
 -- call this once on load incase player is in combat.
 refreshAndUpdateButtons()
 
+local defaultOptions = {
+  debug = false, 
+  ToggleOptions = { 
+    position = {x = 0, y = 0},
+    hidden = false,
+    mode = "hover"
+  },
+  FlyoutOptions = {
+    numLines = 1,
+    hideDelay = 0.25,
+    direction = "UP",
+  }
+}
 local setupSavedVariables = function()
   ---@class ClassicWeaponEnchantsDB
   ---@field mode "hover"|"toggle"
-  local defaultOptions = {
-    debug = false, 
-    ToggleOptions = { 
-      position = {x = 0, y = 0},
-      hidden = false,
-      mode = "hover"
-    },
-    FlyoutOptions = {
-      maxPerRow = 4,
-      hideDelay = 0.25
-    }
-  }
   local function validateTable(old, new, keepMissing)
     -- add any missing keys and assert types for old table.
     for key, default in pairs(new) do
@@ -1011,29 +1056,91 @@ local setupSavedVariables = function()
   return ClassicWeaponEnchantsDB
 end
 
-addon:HookScript("OnEvent", 
-  function(self, event, ...)
-    if BUTTON_UPDATE_EVENTS[event] then
-      -- only debounce when the flyout is hidden.
-      if not addon.FlyoutFrame:IsVisible() then
-        debounce(event, refreshAndUpdateButtons, debounceTimeout)
-      else -- if its open we want to see any changes immediately.
-        refreshAndUpdateButtons()
-      end
-      if event == "PLAYER_ENTERING_WORLD" then
-        setupSavedVariables()
-        addon.FlyoutButton:LoadSavedVars()
-      end
-    elseif event == "PLAYER_REGEN_DISABLED" then
-      print("in combat")
-      addon.FlyoutFrame:ForceResize()
-    elseif event == "PLAYER_REGEN_ENABLED" then
-      print("out of combat")
-    elseif event == "ADDON_LOADED" 
-      and  ADDON_ID == ...
-    then
+addon:HookScript("OnEvent", function(self, event, ...)
+  if BUTTON_UPDATE_EVENTS[event] then
+    -- only debounce when the flyout is hidden.
+    if not addon.FlyoutFrame:IsVisible() then
+      debounce(event, refreshAndUpdateButtons, debounceTimeout)
+    else -- if its open we want to see any changes immediately.
+      refreshAndUpdateButtons()
+    end
+    if event == "PLAYER_ENTERING_WORLD" then
       setupSavedVariables()
       addon.FlyoutButton:LoadSavedVars()
-      DEBUG = ClassicWeaponEnchantsDB.debug
     end
-  end)
+  elseif event == "PLAYER_REGEN_DISABLED" then
+    print("in combat")
+    addon.FlyoutFrame:ForceResize()
+  elseif event == "PLAYER_REGEN_ENABLED" then
+    print("out of combat")
+  elseif event == "ADDON_LOADED" 
+    and  ADDON_ID == ...
+  then
+    setupSavedVariables()
+    addon.FlyoutButton:LoadSavedVars()
+    DEBUG = ClassicWeaponEnchantsDB.debug
+  end
+end)
+
+-- create slash commands for flyout direction
+local WhenSafe = function(callback, ...)
+  if InCombatLockdown() then
+    Frame_OnNextEvent(addon, "PLAYER_REGEN_ENABLED", callback, ...)
+  else
+    callback(...)
+  end
+end
+local slashCmdID = ADDON_ID:upper()
+_G["SLASH_"..slashCmdID..1] = "/cwe"
+local parseCommand = function(line)
+  assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found")
+  local cmd, arg1, arg2 = strsplit(' ', line or "", 3);
+	if (cmd == "dir" or cmd == "direction" ) then
+		arg1 = arg1:upper()
+    if arg1 == "UP" or arg1 == "DOWN" or arg1 == "LEFT" or arg1 == "RIGHT" then
+      ClassicWeaponEnchantsDB.FlyoutOptions.direction = arg1
+      WhenSafe(function()
+        addon.FlyoutFrame:UpdateDirection()
+        DEFAULT_CHAT_FRAME:AddMessage("Flyout direction set to "..arg1)
+      end)
+    else
+      DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe direction {up|down|left|right}")
+    end
+  elseif cmd == "reset" then
+    ClassicWeaponEnchantsDB.ToggleOptions = defaultOptions.ToggleOptions
+    ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptions.FlyoutOptions
+    WhenSafe(function() 
+      addon.FlyoutButton:LoadSavedVars()
+      addon.FlyoutFrame:UpdateDirection()
+      DEFAULT_CHAT_FRAME:AddMessage("Position reset to default")
+    end)
+  elseif cmd == "show" then
+    ClassicWeaponEnchantsDB.ToggleOptions.hidden = false
+    WhenSafe(addon.FlyoutButton.LoadSavedVars, addon.FlyoutButton)
+  elseif cmd == "hide" then
+    ClassicWeaponEnchantsDB.ToggleOptions.hidden = true
+    WhenSafe(addon.FlyoutButton.LoadSavedVars, addon.FlyoutButton)
+  elseif cmd == "debug" then
+    -- todo, dont print anything before saved vars are loaded.
+    DEBUG = not DEBUG
+    ---@diagnostic disable-next-line: inject-field
+    ClassicWeaponEnchantsDB.debug = DEBUG
+    DEFAULT_CHAT_FRAME:AddMessage("Debug mode set to "..tostring(DEBUG))
+  elseif cmd == "lines" then
+    local numLines = tonumber(arg1)
+    if numLines then
+      ClassicWeaponEnchantsDB.FlyoutOptions.numLines = numLines
+      WhenSafe(function()
+        addon.FlyoutFrame:UpdateDirection()
+        DEFAULT_CHAT_FRAME:AddMessage("Flyout lines set to "..numLines)
+      end)
+    else
+      DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe lines {number}")
+    end
+  else
+		DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe {command} {arg}")
+    DEFAULT_CHAT_FRAME:AddMessage("Commands: dir|direction, reset, show, hide")
+		return;
+	end
+end
+SlashCmdList[slashCmdID] = parseCommand

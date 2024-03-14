@@ -13,11 +13,13 @@
 
 ## Usage:
 
-  1. Hover over the toggle button to open the flyout menu
+  1. Hover to open the flyout menu.
 
-  2. Click
+  2. Click weapon enchant.
   - **Left-click**: Apply the selected enchant to the main hand weapon
   - **Right-click**: Apply the selected enchant to the off-hand weapon
+
+  **Supports Season of Discovery ✔️**
 
 ## Todo:
 
