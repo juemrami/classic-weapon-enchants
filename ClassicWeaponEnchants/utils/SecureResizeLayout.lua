@@ -98,7 +98,7 @@ function SecureResizeLayout:New(name, parent)
         frame:SetAttribute("_onshow", script)
     end
     function frame:ForceResize()
-        if true then
+        if not InCombatLockdown() then
 ---@diagnostic disable-next-line: undefined-field
             self:Execute(self:GetAttribute("_onshow"))
         end
