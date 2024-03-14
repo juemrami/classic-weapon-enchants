@@ -1,8 +1,9 @@
 ## Interface: 11500
 ## Title: ClassicWeaponEnchants
 ## Notes: Small addon for managing temporary weapon enchants. Supports poisons, sharpening stones, weapon oils, and shaman enhancements.
-## Version: 0.1.0
+## Version: 0.1.1
 ## SavedVariables: ClassicWeaponEnchantsDB
+## X-Curse-Project-ID: 986924
 
 utils/SecureResizeLayout.lua
 ClassicWeaponEnchants.lua
