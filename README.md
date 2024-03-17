@@ -38,6 +38,9 @@ usage: `/cwe {command} {arg}`
   - `[0.2, 5]` - number between `0.2` and `5`, inclusive
   - default is `0.5`, recommended is `0.25`
   - *Inputs clamped*
+- `icon` - Sets the flyout toggle button's icon
+  - `iconFileID` or `iconFilePath` are accepted args
+  - `0, 1, 2, 3` are included as presets (default is `0`)
 
 ## Todo
 
@@ -47,6 +50,7 @@ usage: `/cwe {command} {arg}`
     3. [ ] Hide delay duration on hover mode
     4. [ ] add a "Hide" option to completely hide the flyout toggle
 2. [x] Add support or additional flyout directions.
+
     *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
     1. [ ] Fix the icon organization for the new directions
 3. [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
