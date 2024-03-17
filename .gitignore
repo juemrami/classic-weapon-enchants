@@ -1,2 +1,4 @@
 /.release
 .pkgmeta
+/.vscode
+.markdownlint.json
