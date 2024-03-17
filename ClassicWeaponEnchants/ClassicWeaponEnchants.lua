@@ -267,15 +267,15 @@ end
 
 function FlyoutButton:LoadSavedVars()
   assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found. Ensure saved variables are loaded before calling this function.") 
-    -- load saved position
-    self:ClearAllPoints()
-    local pos = ClassicWeaponEnchantsDB.ToggleOptions.position
-    if pos.x == 0 and pos.y == 0 then
-      self:SetPoint("CENTER", UIParent, "CENTER")
-    else
-      self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pos.x, pos.y)
-    end
-    -- add script to save position on move
+  -- load saved position
+  self:ClearAllPoints()
+  local pos = ClassicWeaponEnchantsDB.ToggleOptions.position
+  if pos.x == 0 and pos.y == 0 then
+    self:SetPoint("CENTER", UIParent, "CENTER")
+  else
+    self:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", pos.x, pos.y)
+  end
+  -- add script to save position on move
   if not self.updateFuncHooked then 
     addon.FlyoutButton:HookScript("OnDragStop", function(self)
       -- local _, _, _, x, y = self:GetPoint()
@@ -287,9 +287,13 @@ function FlyoutButton:LoadSavedVars()
     end)
     self.updateFuncHooked = true
   end
-  self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
+  --- add secure scripts with any delay timer updates
   ---@diagnostic disable-next-line: undefined-field
   self:SetScripts()
+  --- load preffered icon
+  self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon)
+  self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
+
 end
 
 ---@param shown boolean is flyout shown
@@ -1018,7 +1022,8 @@ local defaultOptions = {
   ToggleOptions = { 
     position = {x = 0, y = 0},
     hidden = false,
-    mode = "hover"
+    mode = "hover",
+    icon = FALLBACK_ICON,
   },
   FlyoutOptions = {
     numLines = 1,
@@ -1107,7 +1112,7 @@ local parseCommand = function(line)
       ClassicWeaponEnchantsDB.FlyoutOptions.direction = arg1
       WhenSafe(function()
         addon.FlyoutFrame:UpdateDirection()
-        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's direction set to "..arg1)
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's direction set to: "..arg1)
       end)
     else
       DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe direction {up|down|left|right}")
@@ -1133,14 +1138,14 @@ local parseCommand = function(line)
     DEBUG = not DEBUG
     ---@diagnostic disable-next-line: inject-field
     ClassicWeaponEnchantsDB.debug = DEBUG
-    DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Debug mode set to "..tostring(DEBUG))
+    DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Debug mode set to: "..tostring(DEBUG))
   elseif cmd == "lines" then
     local numLines = tonumber(arg1)
     if numLines then
       ClassicWeaponEnchantsDB.FlyoutOptions.numLines = numLines
       WhenSafe(function()
         addon.FlyoutFrame:UpdateDirection()
-        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout lines set to "..numLines)
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout lines set to: "..numLines)
       end)
     else
       DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe lines {number}")
@@ -1152,10 +1157,34 @@ local parseCommand = function(line)
       ClassicWeaponEnchantsDB.FlyoutOptions.hideDelay = delay
       WhenSafe(function()
         addon.FlyoutButton:SetScripts()
-        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's auto-hide delay set to "..("%.02f sec"):format(delay))
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's auto-hide delay set to: "..("%.02f sec"):format(delay))
       end)
     else
       DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: `/cwe delay {number}` (numbers between .25 and 5)")
+    end
+  elseif cmd == "icon" then
+    local presets = {
+      [0] = FALLBACK_ICON, -- Poison
+      [1] = 134711, -- Wizard Oil
+      [2] = 135251, -- Sharpening Stone
+      [3] = 135814, -- flametounge icon
+    }
+    local icon = tonumber(arg1) or GetFileIDFromPath(arg1)
+    if icon and presets[icon] then
+      icon = presets[icon]
+    end
+    local inIconIDRange = function(n)
+      -- https://wago.tools/db2/TextureFileData?build=1.15.1.53623&sort[FileDataID]=asc
+      return n >= 117000 and n <= 5583000
+    end
+    if icon and inIconIDRange(icon) then
+      ClassicWeaponEnchantsDB.ToggleOptions.icon = icon
+      WhenSafe(function()
+        addon.FlyoutButton:LoadSavedVars()
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's icon set to:  "..arg1.." "..CreateSimpleTextureMarkup(icon, 16, 16))
+      end)
+    else
+      DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: `/cwe icon {iconID}` or `/cwe icon {iconFilePath}`")
     end
   else
 		DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe {command} {arg}")

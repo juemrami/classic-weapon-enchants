@@ -50,6 +50,7 @@ usage: `/cwe {command} {arg}`
     *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
     1. [ ] Fix the icon organization for the new directions
 3. [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
+4. [ ] fix bug with `debug` value being reset to `false` on reload occasionally.
 
 ## Limitations
 
