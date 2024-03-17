@@ -24,28 +24,32 @@ usage: `/cwe {command} {arg}`
 - `hide` - Hides the flyout toggle
 - `reset` - Resets the flyout menu to its default position
 - `debug` - Toggles debug print statements
-- `direction`,`dir` - Sets the direction of the flyout menu
-  - `up` - Flyout menu will appear above the toggle button
-  - `down` - Flyout menu will appear below the toggle button
-  - `left` - Flyout menu will appear to the left of the toggle button
-  - `right` - Flyout menu will appear to the right of the toggle button
+- `direction` or `dir` - Sets the direction of the flyout menu
+  - `up` - Flyout will appear above the toggle button (default)
+  - `down` - Flyout will appear below the toggle button
+  - `left` - Flyout will appear to the left of the toggle button
+  - `right` - Flyout will appear to the right of the toggle button
 - `lines` - Sets the number of lines in the flyout menu
   - `1` - Flyout menu will have 1 line (default)
   - `2` - Flyout menu will have 2 lines
   - `3` - Flyout menu will have 3 lines (pictured)
   - *Inputs beyond `3` not encouraged; maybe not behave as expected*
+- `delay` - Sets the delay duration in seconds for the flyout menu to hide after the mouse leaves the flyout
+  - `[0.2, 5]` - number between `0.2` and `5`, inclusive
+  - default is `0.5`, recommended is `0.25`
+  - *Inputs clamped*
 
 ## Todo
 
-- [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
-  - [ ] Flyout direction
-  - [ ] Flyout Toggle Mode (Click/Hover)
-  - [ ] Hide delay duration on hover mode
-  - [ ] add a "Hide" option to completely hide the flyout toggle
-- [x] Add support or additional flyout directions.
-  - *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
-  - [ ] Fix the icon organization for the new directions
-- [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
+1. [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
+    1. [ ] Flyout direction
+    2. [ ] Flyout Toggle Mode (Click/Hover)
+    3. [ ] Hide delay duration on hover mode
+    4. [ ] add a "Hide" option to completely hide the flyout toggle
+2. [x] Add support or additional flyout directions.
+    *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
+    1. [ ] Fix the icon organization for the new directions
+3. [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
 
 ## Limitations
 

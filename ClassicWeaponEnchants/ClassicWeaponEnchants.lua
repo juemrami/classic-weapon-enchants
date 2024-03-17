@@ -96,7 +96,6 @@ local FALLBACK_ICON = 136242
 local BUTTON_X_SPACING = 4
 local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
-local hideDelay = 2 -- seconds
 local DEBUG = false
 local ADDON_ID = "ClassicWeaponEnchants"
 assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
@@ -267,7 +266,6 @@ function FlyoutButton:IsEnabled()
 end
 
 function FlyoutButton:LoadSavedVars()
-  ---@type ClassicWeaponEnchantsDB
   assert(ClassicWeaponEnchantsDB, "ClassicWeaponEnchantsDB not found. Ensure saved variables are loaded before calling this function.") 
     -- load saved position
     self:ClearAllPoints()
@@ -290,6 +288,8 @@ function FlyoutButton:LoadSavedVars()
     self.updateFuncHooked = true
   end
   self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
+  ---@diagnostic disable-next-line: undefined-field
+  self:SetScripts()
 end
 
 ---@param shown boolean is flyout shown
@@ -891,26 +891,28 @@ local toggleHandle = "FlyoutButton"
 addon.FlyoutButton:SetFrameRef(flyoutHandle, addon.FlyoutFrame)
 ---@diagnostic disable-next-line: undefined-field
 addon.FlyoutButton:SetFrameRef(toggleHandle, addon.FlyoutButton)
-local ShowFlyoutAndSetAutoHide = ([=[
-  local flyout = self:GetFrameRef("%s");
-  if not flyout:IsShown() then 
-    flyout:CallMethod("BenchMarkStart", "Show Flyout")
-    local isFlyoutEmpty = true;
-    local children = flyout:GetChildList(newtable());
-    for i, child in ipairs(children) do
-      if child:IsShown() and child:IsObjectType("Button") then
-        isFlyoutEmpty = false;
-        break;
+local ShowFlyoutAndSetAutoHide = function(delay) 
+  return ([=[
+    local flyout = self:GetFrameRef("%s");
+    if not flyout:IsShown() then 
+      flyout:CallMethod("BenchMarkStart", "Show Flyout")
+      local isFlyoutEmpty = true;
+      local children = flyout:GetChildList(newtable());
+      for i, child in ipairs(children) do
+        if child:IsShown() and child:IsObjectType("Button") then
+          isFlyoutEmpty = false;
+          break;
+        end
+      end
+      if not isFlyoutEmpty then
+        flyout:Show();
       end
     end
-    if not isFlyoutEmpty then
-      flyout:Show();
-    end
-  end
-  local toggle = self:GetFrameRef("%s");
-  flyout:RegisterAutoHide(%.2f);
-  flyout:AddToAutoHide(toggle);
-]=]):format(flyoutHandle, toggleHandle, hideDelay);
+    local toggle = self:GetFrameRef("%s");
+    flyout:RegisterAutoHide(%.2f);
+    flyout:AddToAutoHide(toggle);
+  ]=]):format(flyoutHandle, toggleHandle, delay)
+end
 
 -- This feature is only active when flyout has nothing to show.
 -- intending on adding a explicit show/hide feature for all other times.
@@ -932,9 +934,13 @@ local HideFlyoutButtonOnShiftRightClick = ([=[
   end
 ]=]):format(flyoutHandle)
 
-addon.FlyoutButton:SetAttribute("_onenter", ShowFlyoutAndSetAutoHide)
-addon.FlyoutButton:SetAttribute("_onreceivedrag", ShowFlyoutAndSetAutoHide)
-addon.FlyoutButton:SetAttribute("_onmouseup", HideFlyoutButtonOnShiftRightClick)
+---@diagnostic disable-next-line: inject-field
+function addon.FlyoutButton:SetScripts()
+  local hideDelay = ClassicWeaponEnchantsDB and ClassicWeaponEnchantsDB.FlyoutOptions.hideDelay or 0.5
+  addon.FlyoutButton:SetAttribute("_onenter", ShowFlyoutAndSetAutoHide(hideDelay))
+  addon.FlyoutButton:SetAttribute("_onreceivedrag", ShowFlyoutAndSetAutoHide(hideDelay))
+  addon.FlyoutButton:SetAttribute("_onmouseup", HideFlyoutButtonOnShiftRightClick)
+end
 addon.FlyoutButton:HookScript("OnEnter", function(self)
   -- self:RefreshButtonInfo()
   GameTooltip:SetOwner(self, "ANCHOR_NONE")
@@ -1016,7 +1022,7 @@ local defaultOptions = {
   },
   FlyoutOptions = {
     numLines = 1,
-    hideDelay = 0.25,
+    hideDelay = 0.5,
     direction = "UP",
   }
 }
@@ -1101,18 +1107,20 @@ local parseCommand = function(line)
       ClassicWeaponEnchantsDB.FlyoutOptions.direction = arg1
       WhenSafe(function()
         addon.FlyoutFrame:UpdateDirection()
-        DEFAULT_CHAT_FRAME:AddMessage("Flyout direction set to "..arg1)
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's direction set to "..arg1)
       end)
     else
-      DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe direction {up|down|left|right}")
+      DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe direction {up|down|left|right}")
     end
   elseif cmd == "reset" then
+    ---@diagnostic disable-next-line: inject-field
     ClassicWeaponEnchantsDB.ToggleOptions = defaultOptions.ToggleOptions
+    ---@diagnostic disable-next-line: inject-field
     ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptions.FlyoutOptions
     WhenSafe(function() 
       addon.FlyoutButton:LoadSavedVars()
       addon.FlyoutFrame:UpdateDirection()
-      DEFAULT_CHAT_FRAME:AddMessage("Position reset to default")
+      DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."All settings reset to default!")
     end)
   elseif cmd == "show" then
     ClassicWeaponEnchantsDB.ToggleOptions.hidden = false
@@ -1125,21 +1133,33 @@ local parseCommand = function(line)
     DEBUG = not DEBUG
     ---@diagnostic disable-next-line: inject-field
     ClassicWeaponEnchantsDB.debug = DEBUG
-    DEFAULT_CHAT_FRAME:AddMessage("Debug mode set to "..tostring(DEBUG))
+    DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Debug mode set to "..tostring(DEBUG))
   elseif cmd == "lines" then
     local numLines = tonumber(arg1)
     if numLines then
       ClassicWeaponEnchantsDB.FlyoutOptions.numLines = numLines
       WhenSafe(function()
         addon.FlyoutFrame:UpdateDirection()
-        DEFAULT_CHAT_FRAME:AddMessage("Flyout lines set to "..numLines)
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout lines set to "..numLines)
       end)
     else
-      DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe lines {number}")
+      DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe lines {number}")
+    end
+  elseif cmd == "delay" then
+    local delay = tonumber(arg1) or 0
+    delay = Clamp(delay, .20, 5)
+    if delay then
+      ClassicWeaponEnchantsDB.FlyoutOptions.hideDelay = delay
+      WhenSafe(function()
+        addon.FlyoutButton:SetScripts()
+        DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's auto-hide delay set to "..("%.02f sec"):format(delay))
+      end)
+    else
+      DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: `/cwe delay {number}` (numbers between .25 and 5)")
     end
   else
-		DEFAULT_CHAT_FRAME:AddMessage("Usage: /cwe {command} {arg}")
-    DEFAULT_CHAT_FRAME:AddMessage("Commands: dir|direction, reset, show, hide")
+		DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Usage: /cwe {command} {arg}")
+    DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Commands: dir|direction, reset, show, hide")
 		return;
 	end
 end
