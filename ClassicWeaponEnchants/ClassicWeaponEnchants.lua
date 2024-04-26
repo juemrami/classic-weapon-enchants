@@ -3,8 +3,12 @@ local _, private = ...
 ---@see GetWeaponEnchantInfo
 
 -- [itemID] -> {spellID, enchantID}
----@type {[integer]: {spell: integer, enchant: integer}}
+-- spellID isnt used atm in favor of the API GetItemSpell(itemID) which returns the same spellID for the item.
+-- enchantID isnt used atm but its can be used to check for the remaining duration of an enchant. (GetWeaponEnchantInfo returns the enchantID)
+---@type {[integer]: {spell: integer?, enchant: integer?}}
 local tempEnchantItems = {
+  -- Cleaning Cloth
+  [221362] = { spell = nil, enchant = nil },        -- Cleaning Cloth
   -- Poisons
   [2892] = { spell = 2823, enchant = 7 },        -- Deadly Poison
   [2893] = { spell = 2824, enchant = 8 },        -- Deadly Poison II
