@@ -49,17 +49,18 @@ usage: `/cwe {command} {arg}`
 
 ## Todo
 
-1. [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
-    1. [ ] Flyout direction
-    2. [ ] Flyout Toggle Mode (Click/Hover)
-    3. [ ] Hide delay duration on hover mode
-    4. [ ] add a "Hide" option to completely hide the flyout toggle
+1. [ ] Add Dropdown settings on right clicking the toggle button to allow for some customization
+    1. Would include options such as:
+        - Flyout direction
+        - Flyout Toggle Mode (Click/Hover)
+        - Hide delay duration on hover mode
+        - add a "Hide" option to completely hide the flyout toggle
 2. [x] Add support or additional flyout directions.
 
     *roughly* implemented. The buttons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
     1. [ ] Fix the button organization for the new directions
 3. [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
-4. [ ] fix bug with `debug` value being reset to `false` on reload occasionally.
+4. [x] fix bug with `debug` value being reset to `false` on reload occasionally.
 
 ## Limitations
 
