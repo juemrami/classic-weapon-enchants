@@ -1,4 +1,4 @@
-local _, 
+local TOC_NAME, 
   ---@class ClassicWeaponEnchants
   private = ...;
 
@@ -23,7 +23,7 @@ local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
 local DEBUG = false
 local ADDON_ID = "ClassicWeaponEnchants"
-assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
+assert(ADDON_ID == TOC_NAME, "ADDON_ID does not match toc's addon name", {toc = TOC_NAME, lua = ADDON_ID})
 local BASE_BUTTON_ID = ADDON_ID .. "Button"
 local MAIN_BUTTON_SIZE = 35 -- square
 
