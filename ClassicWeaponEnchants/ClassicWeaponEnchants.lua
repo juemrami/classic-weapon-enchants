@@ -5,7 +5,16 @@ local _,
 local tempEnchantItems = private.ItemImbues
 local tempEnchantSpells = private.SpellImbues
 
-local FALLBACK_ICON = 136242
+
+local suggestedIcons = {
+  ["ROGUE"] = 136242, -- Poison
+  ["WARRIOR"] = 135251, -- Sharpening Stone
+  ["SHAMAN"] = 135814, -- flametounge icon
+  ["CASTER"] = 134711, -- Wizard Oil
+}
+local class = PlayerUtil.GetClassFile()
+local FALLBACK_ICON = suggestedIcons[class] or suggestedIcons["CASTER"]
+
 -- todo: refactor this num buttons stuff.
 -- this terminology only makes sense for horizontal layouts. (left/right)
 -- note: for the "UP" and "DOWN", to make the make the button stack vertically, im setting the number of rows to an arbirtatrily high number (32) that a user will never realistically have this many. to trigger a 2nd column from being created. This is not ideal, and immediate improvement is just just pick the nearest 2^n number to the number of buttons required for the flyout.
@@ -207,7 +216,7 @@ function FlyoutButton:LoadSavedVars()
   ---@diagnostic disable-next-line: undefined-field
   self:SetScripts()
   --- load preffered icon
-  self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon)
+  self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon or FALLBACK_ICON)
   self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
 
 end
@@ -1080,10 +1089,11 @@ local parseCommand = function(line)
     end
   elseif cmd == "icon" then
     local presets = {
-      [0] = FALLBACK_ICON, -- Poison
-      [1] = 134711, -- Wizard Oil
-      [2] = 135251, -- Sharpening Stone
-      [3] = 135814, -- flametounge icon
+      [0] = FALLBACK_ICON,
+      [1] = 136242, -- Poison
+      [2] = 134711, -- Wizard Oil
+      [3] = 135251, -- Sharpening Stone
+      [4] = 135814, -- flametounge icon
     }
     local icon = tonumber(arg1) or GetFileIDFromPath(arg1)
     if icon and presets[icon] then
@@ -1094,7 +1104,14 @@ local parseCommand = function(line)
       return n >= 117000 and n <= 5583000
     end
     if icon and inIconIDRange(icon) then
-      ClassicWeaponEnchantsDB.ToggleOptions.icon = icon
+      if icon == FALLBACK_ICON then
+        -- hack, 
+        -- since FlyoutButton.LoadSavedVars will set the icon to the fallback if the db value is nil.
+        -- This allows the `0` option icon to remain dynamic based on the class.
+        ClassicWeaponEnchantsDB.ToggleOptions.icon = nil
+      else
+        ClassicWeaponEnchantsDB.ToggleOptions.icon = icon
+      end
       WhenSafe(function()
         addon.FlyoutButton:LoadSavedVars()
         DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's icon set to:  "..arg1.." "..CreateSimpleTextureMarkup(icon, 16, 16))
