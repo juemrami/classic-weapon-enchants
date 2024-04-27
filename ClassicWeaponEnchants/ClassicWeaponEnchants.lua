@@ -12,7 +12,7 @@ local suggestedIcons = {
   ["SHAMAN"] = 135814, -- flametounge icon
   ["CASTER"] = 134711, -- Wizard Oil
 }
-local class = PlayerUtil.GetClassFile()
+local _, class = UnitClass("player")
 local FALLBACK_ICON = suggestedIcons[class] or suggestedIcons["CASTER"]
 
 -- todo: refactor this num buttons stuff.
