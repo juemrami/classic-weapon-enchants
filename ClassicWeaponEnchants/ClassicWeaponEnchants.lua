@@ -47,7 +47,8 @@ end
 
 local debugHeader = AZERITE_ESSENCE_COLOR:WrapTextInColorCode("["..ADDON_ID.."]: ")
 local print = function(...)
-  if DEBUG then
+  if DEBUG 
+  or (ClassicWeaponEnchantsDB and ClassicWeaponEnchantsDB.debug) then
     _G.print(debugHeader, ...)
   end
 end
@@ -215,7 +216,7 @@ function FlyoutButton:LoadSavedVars()
   --- add secure scripts with any delay timer updates
   ---@diagnostic disable-next-line: undefined-field
   self:SetScripts()
-  --- load preffered icon
+  --- load preffered icon or use fallback
   self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon or FALLBACK_ICON)
   self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
 
@@ -942,29 +943,41 @@ end
 -- call this once on load incase player is in combat.
 refreshAndUpdateButtons()
 
-local defaultOptions = {
+---@class ClassicWeaponEnchantsDB
+local defaultOptionsDB = {
   debug = false, 
-  ToggleOptions = { 
+  ToggleOptions = {
+    ---@type {x: number, y: number}
     position = {x = 0, y = 0},
-    hidden = false,
+    ---@type "hover"|"toggle
     mode = "hover",
-    icon = FALLBACK_ICON,
+    ---@type integer?
+    icon = nil, -- fallback
+    hidden = false,
   },
   FlyoutOptions = {
-    numLines = 1,
-    hideDelay = 0.5,
+    ---@type "UP"|"DOWN"|"LEFT"|"RIGHT"
     direction = "UP",
+    ---@type integer
+    numLines = 1,
+    ---@type number
+    hideDelay = 0.5,
   }
 }
 local setupSavedVariables = function()
-  ---@class ClassicWeaponEnchantsDB
-  ---@field mode "hover"|"toggle"
-  local function validateTable(old, new, keepMissing)
+  local nilExceptions = {
+    ["icon"] = true, -- nilable to allow for fallback to suggestedIcons
+  }
+  local function validateTable(old, current, keepMissing)
     -- add any missing keys and assert types for old table.
-    for key, default in pairs(new) do
-      if not old[key] 
+    for key, default in pairs(current) do
+      if old[key] == nil
       or type(old[key]) ~= type(default)
       then
+        local reason = old[key] == nil 
+          and "Missing Key."
+          or ("Missmatched Types. old: %s | new: %s"):format(type(old[key]), type(default))
+        print("DB Key: ", key, ", sets to default: ", default, " Reason: ", reason)
         old[key] = default
       elseif type(default) == "table" then
         validateTable(old[key], default)
@@ -975,19 +988,25 @@ local setupSavedVariables = function()
     end
     -- remove any keys that are not in the new table
     for key, _ in pairs(old) do
-      if not new[key] then
+      if not nilExceptions[key]
+        and current[key] == nil
+      then
+        print("Removing deprecated DB key: ", key)
         old[key] = nil
-      elseif type(new[key]) == "table" then
-        validateTable(old[key], new[key])
+      elseif type(current[key]) == "table" then
+        validateTable(old[key], current[key])
       end
     end
     return old
   end
-  local savedVars = ClassicWeaponEnchantsDB or defaultOptions
+  local savedVars = ClassicWeaponEnchantsDB or defaultOptionsDB
   -- validate saved variables w/ default options table
-  savedVars = validateTable(savedVars, defaultOptions)
+  if savedVars ~= defaultOptionsDB then
+    savedVars = validateTable(savedVars, defaultOptionsDB, true)
+  end
+  ---@cast savedVars ClassicWeaponEnchantsDB
+  
   -- update global refrence to match validated vars
-  ---@type ClassicWeaponEnchantsDB
   ClassicWeaponEnchantsDB = savedVars
   return ClassicWeaponEnchantsDB
 end
@@ -1044,9 +1063,9 @@ local parseCommand = function(line)
     end
   elseif cmd == "reset" then
     ---@diagnostic disable-next-line: inject-field
-    ClassicWeaponEnchantsDB.ToggleOptions = defaultOptions.ToggleOptions
+    ClassicWeaponEnchantsDB.ToggleOptions = defaultOptionsDB.ToggleOptions
     ---@diagnostic disable-next-line: inject-field
-    ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptions.FlyoutOptions
+    ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptionsDB.FlyoutOptions
     WhenSafe(function() 
       addon.FlyoutButton:LoadSavedVars()
       addon.FlyoutFrame:UpdateDirection()
