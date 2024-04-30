@@ -39,22 +39,28 @@ usage: `/cwe {command} {arg}`
   - default is `0.5`, recommended is `0.25`
   - *Inputs clamped*
 - `icon` - Sets the flyout toggle button's icon
-  - `iconFileID` or `iconFilePath` are accepted args
-  - `0, 1, 2, 3` are included as presets (default is `0`)
+  - arg is a either a number, which can be a `iconFileID` or a preset `[0-4]`
+    - `0` - This fallback icon is dynamic based on the players class.
+    - `1` - Poison icon
+    - `2` - Weapon oil icon
+    - `3` - Sharpening stone icon
+    - `4` - Shaman enhancement icon
+  - or a `iconFilePath` string such as `"Interface\Icons\INV_Misc_QuestionMark"`
 
 ## Todo
 
-1. [ ] Add a settings dropdown on right clicking the toggle button to allow for some customization
-    1. [ ] Flyout direction
-    2. [ ] Flyout Toggle Mode (Click/Hover)
-    3. [ ] Hide delay duration on hover mode
-    4. [ ] add a "Hide" option to completely hide the flyout toggle
+1. [ ] Add Dropdown settings on right clicking the toggle button to allow for some customization
+    1. Would include options such as:
+        - Flyout direction
+        - Flyout Toggle Mode (Click/Hover)
+        - Hide delay duration on hover mode
+        - add a "Hide" option to completely hide the flyout toggle
 2. [x] Add support or additional flyout directions.
 
-    *roughly* implemented. The icons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
-    1. [ ] Fix the icon organization for the new directions
+    *roughly* implemented. The buttons are not organized in a way that makes sense for the new directions, but the flyout does appear in the correct location.
+    1. [ ] Fix the button organization for the new directions
 3. [ ] Add a "click" mode for the flyout toggle by implement it as checkbox widget.
-4. [ ] fix bug with `debug` value being reset to `false` on reload occasionally.
+4. [x] fix bug with `debug` value being reset to `false` on reload occasionally.
 
 ## Limitations
 

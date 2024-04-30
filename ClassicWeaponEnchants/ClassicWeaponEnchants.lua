@@ -1,99 +1,20 @@
-local _, private = ...
--- enchantID could be used to check if the player has the enchant already
----@see GetWeaponEnchantInfo
+local TOC_NAME, 
+  ---@class ClassicWeaponEnchants
+  private = ...;
 
--- [itemID] -> {spellID, enchantID}
--- spellID isnt used atm in favor of the API GetItemSpell(itemID) which returns the same spellID for the item.
--- enchantID isnt used atm but its can be used to check for the remaining duration of an enchant. (GetWeaponEnchantInfo returns the enchantID)
----@type {[integer]: {spell: integer?, enchant: integer?}}
-local tempEnchantItems = {
-  -- Cleaning Cloth
-  [221362] = { spell = nil, enchant = nil },        -- Cleaning Cloth
-  -- Poisons
-  [2892] = { spell = 2823, enchant = 7 },        -- Deadly Poison
-  [2893] = { spell = 2824, enchant = 8 },        -- Deadly Poison II
-  [8984] = { spell = 11355, enchant = 626 },     -- Deadly Poison III
-  [8985] = { spell = 11356, enchant = 627 },     -- Deadly Poison IV
-  [20844] = { spell = 25351, enchant = 2630 },   -- Deadly Poison V
-  [3775] = { spell = 3408, enchant = 22 },       -- Crippling Poison
-  [3776] = { spell = 11202, enchant = 603 },     -- Crippling Poison II
-  [5237] = { spell = 5761, enchant = 35 },       -- Mind-numbing Poison
-  [6951] = { spell = 8693, enchant = 23 },       -- Mind-numbing Poison II
-  [9186] = { spell = 11399, enchant = 643 },     -- Mind-numbing Poison III
-  [6947] = { spell = 8679, enchant = 323 },      -- Instant Poison
-  [6949] = { spell = 8686, enchant = 324 },      -- Instant Poison II
-  [6950] = { spell = 8688, enchant = 325 },      -- Instant Poison III
-  [8926] = { spell = 11338, enchant = 623 },     -- Instant Poison IV
-  [8927] = { spell = 11339, enchant = 624 },     -- Instant Poison V
-  [8928] = { spell = 11340, enchant = 625 },     -- Instant Poison VI
-  [10918] = { spell = 13219, enchant = 703 },    -- Wound Poison
-  [10920] = { spell = 13225, enchant = 704 },    -- Wound Poison II
-  [10921] = { spell = 13226, enchant = 705 },    -- Wound Poison III
-  [10922] = { spell = 13227, enchant = 706 },    -- Wound Poison IV
-  -- Sharpening Stones
-  [2862] = { spell = 2828, enchant = 40 },       -- Rough Sharpening Stone
-  [2863] = { spell = 2829, enchant = 13 },       -- Coarse Sharpening Stone
-  [2871] = { spell = 2830, enchant = 14 },       -- Heavy Sharpening Stone
-  [3239] = { spell = 3112, enchant = 19 },       -- Rough Weightstone
-  [3240] = { spell = 3113, enchant = 20 },       -- Coarse Weightstone
-  [3241] = { spell = 3114, enchant = 21 },       -- Heavy Weightstone
-  [7964] = { spell = 9900, enchant = 483 },      -- Solid Sharpening Stone
-  [7965] = { spell = 9903, enchant = 484 },      -- Solid Weightstone
-  [12404] = { spell = 16138, enchant = 1643 },   -- Dense Sharpening Stone
-  [12643] = { spell = 16622, enchant = 1703 },   -- Dense Weightstone
-  [18262] = { spell = 22756, enchant = 2506 },   -- Elemental Sharpening Stone
-  [23122] = { spell = 28891, enchant = 2684 },   -- Consecrated Sharpening Stone
-  [211845] = { spell = 430392, enchant = 7098 }, -- Blackfathom Sharpening Stone
-  -- Oils
-  [3824] = { spell = 3594, enchant = 25 },       -- Shadow Oil
-  [3829] = { spell = 3595, enchant = 26 },       -- Frost Oil
-  [20744] = { spell = 25117, enchant = 2623 },   -- Minor Wizard Oil
-  [20745] = { spell = 25118, enchant = 2624 },   -- Minor Mana Oil
-  [20746] = { spell = 25119, enchant = 2626 },   -- Lesser Wizard Oil
-  [20747] = { spell = 25120, enchant = 2625 },   -- Lesser Mana Oil
-  [20748] = { spell = 25123, enchant = 2629 },   -- Brilliant Mana Oil
-  [20749] = { spell = 25122, enchant = 2628 },   -- Brilliant Wizard Oil
-  [20750] = { spell = 25121, enchant = 2627 },   -- Wizard Oil
-  [23123] = { spell = 28898, enchant = 2685 },   -- Blessed Wizard Oil
-  [211848] = { spell = 430585, enchant = 7099 }, -- Blackfathom Mana Oil
+local tempEnchantItems = private.ItemImbues
+local tempEnchantSpells = private.SpellImbues
+
+
+local suggestedIcons = {
+  ["ROGUE"] = 136242, -- Poison
+  ["WARRIOR"] = 135251, -- Sharpening Stone
+  ["SHAMAN"] = 135814, -- flametounge icon
+  ["CASTER"] = 134711, -- Wizard Oil
 }
+local _, class = UnitClass("player")
+local FALLBACK_ICON = suggestedIcons[class] or suggestedIcons["CASTER"]
 
--- todo: add support for shaman castable weapon enchants
--- [spellID] -> enchantID
-local tempEnchantSpells = {
-  [8017] = { enchantID = 29 },    -- Rockbiter Weapon I
-  [8018] = { enchantID = 6 },     -- Rockbiter Weapon II
-  [8019] = { enchantID = 1 },     -- Rockbiter Weapon III
-  [10399] = { enchantID = 503 },  -- Rockbiter Weapon IV
-  [16314] = { enchantID = 683 },  -- Rockbiter Weapon V
-  [16315] = { enchantID = 1663 }, -- Rockbiter Weapon VI
-  [16316] = { enchantID = 1664 }, -- Rockbiter Weapon VII
-  [8024] = { enchantID = 5 },     -- Flametongue Weapon I
-  [8027] = { enchantID = 4 },     -- Flametongue Weapon II
-  [8030] = { enchantID = 3 },     -- Flametongue Weapon III
-  [16339] = { enchantID = 523 },  -- Flametongue Weapon IV
-  [16341] = { enchantID = 1665 }, -- Flametongue Weapon V
-  [16342] = { enchantID = 1666 }, -- Flametongue Weapon VI
-  [8033] = { enchantID = 2 },     -- Frostbrand Weapon I
-  [8038] = { enchantID = 12 },    -- Frostbrand Weapon II
-  [10456] = { enchantID = 524 },  -- Frostbrand Weapon III
-  [16355] = { enchantID = 1667 }, -- Frostbrand Weapon IV
-  [16356] = { enchantID = 1668 }, -- Frostbrand Weapon V
-  [8232] = { enchantID = 283 },   -- Windfury Weapon I
-  [8235] = { enchantID = 284 },   -- Windfury Weapon II
-  [10486] = { enchantID = 525 },  -- Windfury Weapon III
-  [16362] = { enchantID = 1669 }, -- Windfury Weapon IV
-  [7451] = { enchantID = 64 },  -- Imbue Chest - Minor Spirit
-  [7448] = { enchantID = 63 },  -- Imbue Chest - Lesser Absorb
-  [7855] = { enchantID = 253 }, -- Imbue Chest - Absorb
-  [7853] = { enchantID = 252 }, -- Imbue Chest - Lesser Spirit
-  [7865] = { enchantID = 257 }, -- Imbue Cloak - Lesser Protection
-  [7439] = { enchantID = 28 },  -- Imbue Cloak - Minor Resistance
-  [7769] = { enchantID = 244 }, -- Imbue Bracers - Minor Wisdom OLD
-  [7434] = { enchantID = 31 },  -- Imbue Weapon - Beastslayer
-}
-
-local FALLBACK_ICON = 136242
 -- todo: refactor this num buttons stuff.
 -- this terminology only makes sense for horizontal layouts. (left/right)
 -- note: for the "UP" and "DOWN", to make the make the button stack vertically, im setting the number of rows to an arbirtatrily high number (32) that a user will never realistically have this many. to trigger a 2nd column from being created. This is not ideal, and immediate improvement is just just pick the nearest 2^n number to the number of buttons required for the flyout.
@@ -102,7 +23,7 @@ local BUTTON_Y_SPACING = 6
 local dragMouseButton = "LeftButton"
 local DEBUG = false
 local ADDON_ID = "ClassicWeaponEnchants"
-assert(ADDON_ID == _, "ADDON_ID does not match toc's addon name", {toc = _, lua = ADDON_ID})
+assert(ADDON_ID == TOC_NAME, "ADDON_ID does not match toc's addon name", {toc = TOC_NAME, lua = ADDON_ID})
 local BASE_BUTTON_ID = ADDON_ID .. "Button"
 local MAIN_BUTTON_SIZE = 35 -- square
 
@@ -126,7 +47,8 @@ end
 
 local debugHeader = AZERITE_ESSENCE_COLOR:WrapTextInColorCode("["..ADDON_ID.."]: ")
 local print = function(...)
-  if DEBUG then
+  if DEBUG 
+  or (ClassicWeaponEnchantsDB and ClassicWeaponEnchantsDB.debug) then
     _G.print(debugHeader, ...)
   end
 end
@@ -294,8 +216,8 @@ function FlyoutButton:LoadSavedVars()
   --- add secure scripts with any delay timer updates
   ---@diagnostic disable-next-line: undefined-field
   self:SetScripts()
-  --- load preffered icon
-  self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon)
+  --- load preffered icon or use fallback
+  self.Icon:SetTexture(ClassicWeaponEnchantsDB.ToggleOptions.icon or FALLBACK_ICON)
   self:SetShown(not ClassicWeaponEnchantsDB.ToggleOptions.hidden)
 
 end
@@ -1021,29 +943,41 @@ end
 -- call this once on load incase player is in combat.
 refreshAndUpdateButtons()
 
-local defaultOptions = {
+---@class ClassicWeaponEnchantsDB
+local defaultOptionsDB = {
   debug = false, 
-  ToggleOptions = { 
+  ToggleOptions = {
+    ---@type {x: number, y: number}
     position = {x = 0, y = 0},
-    hidden = false,
+    ---@type "hover"|"toggle
     mode = "hover",
-    icon = FALLBACK_ICON,
+    ---@type integer?
+    icon = nil, -- fallback
+    hidden = false,
   },
   FlyoutOptions = {
-    numLines = 1,
-    hideDelay = 0.5,
+    ---@type "UP"|"DOWN"|"LEFT"|"RIGHT"
     direction = "UP",
+    ---@type integer
+    numLines = 1,
+    ---@type number
+    hideDelay = 0.5,
   }
 }
 local setupSavedVariables = function()
-  ---@class ClassicWeaponEnchantsDB
-  ---@field mode "hover"|"toggle"
-  local function validateTable(old, new, keepMissing)
+  local nilExceptions = {
+    ["icon"] = true, -- nilable to allow for fallback to suggestedIcons
+  }
+  local function validateTable(old, current, keepMissing)
     -- add any missing keys and assert types for old table.
-    for key, default in pairs(new) do
-      if not old[key] 
+    for key, default in pairs(current) do
+      if old[key] == nil
       or type(old[key]) ~= type(default)
       then
+        local reason = old[key] == nil 
+          and "Missing Key."
+          or ("Missmatched Types. old: %s | new: %s"):format(type(old[key]), type(default))
+        print("DB Key: ", key, ", sets to default: ", default, " Reason: ", reason)
         old[key] = default
       elseif type(default) == "table" then
         validateTable(old[key], default)
@@ -1054,19 +988,25 @@ local setupSavedVariables = function()
     end
     -- remove any keys that are not in the new table
     for key, _ in pairs(old) do
-      if not new[key] then
+      if not nilExceptions[key]
+        and current[key] == nil
+      then
+        print("Removing deprecated DB key: ", key)
         old[key] = nil
-      elseif type(new[key]) == "table" then
-        validateTable(old[key], new[key])
+      elseif type(current[key]) == "table" then
+        validateTable(old[key], current[key])
       end
     end
     return old
   end
-  local savedVars = ClassicWeaponEnchantsDB or defaultOptions
+  local savedVars = ClassicWeaponEnchantsDB or defaultOptionsDB
   -- validate saved variables w/ default options table
-  savedVars = validateTable(savedVars, defaultOptions)
+  if savedVars ~= defaultOptionsDB then
+    savedVars = validateTable(savedVars, defaultOptionsDB, true)
+  end
+  ---@cast savedVars ClassicWeaponEnchantsDB
+  
   -- update global refrence to match validated vars
-  ---@type ClassicWeaponEnchantsDB
   ClassicWeaponEnchantsDB = savedVars
   return ClassicWeaponEnchantsDB
 end
@@ -1123,9 +1063,9 @@ local parseCommand = function(line)
     end
   elseif cmd == "reset" then
     ---@diagnostic disable-next-line: inject-field
-    ClassicWeaponEnchantsDB.ToggleOptions = defaultOptions.ToggleOptions
+    ClassicWeaponEnchantsDB.ToggleOptions = defaultOptionsDB.ToggleOptions
     ---@diagnostic disable-next-line: inject-field
-    ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptions.FlyoutOptions
+    ClassicWeaponEnchantsDB.FlyoutOptions = defaultOptionsDB.FlyoutOptions
     WhenSafe(function() 
       addon.FlyoutButton:LoadSavedVars()
       addon.FlyoutFrame:UpdateDirection()
@@ -1168,10 +1108,11 @@ local parseCommand = function(line)
     end
   elseif cmd == "icon" then
     local presets = {
-      [0] = FALLBACK_ICON, -- Poison
-      [1] = 134711, -- Wizard Oil
-      [2] = 135251, -- Sharpening Stone
-      [3] = 135814, -- flametounge icon
+      [0] = FALLBACK_ICON,
+      [1] = 136242, -- Poison
+      [2] = 134711, -- Wizard Oil
+      [3] = 135251, -- Sharpening Stone
+      [4] = 135814, -- flametounge icon
     }
     local icon = tonumber(arg1) or GetFileIDFromPath(arg1)
     if icon and presets[icon] then
@@ -1182,7 +1123,14 @@ local parseCommand = function(line)
       return n >= 117000 and n <= 5583000
     end
     if icon and inIconIDRange(icon) then
-      ClassicWeaponEnchantsDB.ToggleOptions.icon = icon
+      if icon == FALLBACK_ICON then
+        -- hack, 
+        -- since FlyoutButton.LoadSavedVars will set the icon to the fallback if the db value is nil.
+        -- This allows the `0` option icon to remain dynamic based on the class.
+        ClassicWeaponEnchantsDB.ToggleOptions.icon = nil
+      else
+        ClassicWeaponEnchantsDB.ToggleOptions.icon = icon
+      end
       WhenSafe(function()
         addon.FlyoutButton:LoadSavedVars()
         DEFAULT_CHAT_FRAME:AddMessage(debugHeader.."Flyout's icon set to:  "..arg1.." "..CreateSimpleTextureMarkup(icon, 16, 16))
