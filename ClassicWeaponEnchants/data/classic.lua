@@ -12,7 +12,7 @@ local _,
 ---@type ClassicWeaponEnchants.ItemImbues
 local tempEnchantItems = {
     -- Misc
-    [221362] = {spellID = 446637, enchant = 7327}, -- Weapon Cleaning Cloth
+    [221362] = {spellID = 446637, enchant = 7327}, -- Weapon Cleaning Cloth (SoD)
     -- Poisons
     [2892] = { spell = 2823, enchant = 7 },        -- Deadly Poison
     [2893] = { spell = 2824, enchant = 8 },        -- Deadly Poison II
@@ -34,6 +34,11 @@ local tempEnchantItems = {
     [10920] = { spell = 13225, enchant = 704 },    -- Wound Poison II
     [10921] = { spell = 13226, enchant = 705 },    -- Wound Poison III
     [10922] = { spell = 13227, enchant = 706 },    -- Wound Poison IV
+    [217345] = { spell = 439462, enchant = 7254},  -- Sebacious Poison (SoD)
+    [217346] = { spell = 439464, enchant = 7255},  -- Numbing Poison (SoD)
+    [217347] = { spell = 439465, enchant = 7256},  -- Atrophic Poison (SoD)
+    [226374] = { spell = 458821, enchant = 7452},  -- Occult Poison I (SoD)
+
     -- Sharpening Stones
     [2862] = { spell = 2828, enchant = 40 },       -- Rough Sharpening Stone
     [2863] = { spell = 2829, enchant = 13 },       -- Coarse Sharpening Stone
