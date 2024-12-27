@@ -427,16 +427,16 @@ local disableButton = function(button)
   button:SetScript("OnEnter", nil)
 end
 
-local ButtonPool = CreateFramePool("Button", addon.FlyoutFrame, "SecureActionButtonTemplate, ItemButtonTemplate", buttonReseter, false, buttonInitializer)
--- Reimple creationFunc to use a frame name
 local createdCount = 0
 local creationFunc = function(pool)
   createdCount = createdCount + 1
-  local frame = CreateFrame(pool.frameType, "$parentActionItemButton"..createdCount, pool.parent, pool.frameTemplate)
-  buttonInitializer(frame)
-  return frame
+  local button = CreateFrame("Button", "$parentActionItemButton"..createdCount, addon.FlyoutFrame, "SecureActionButtonTemplate, ItemButtonTemplate")
+  buttonInitializer(button)
+  return button
 end
-ButtonPool.creationFunc = creationFunc
+
+local ButtonPool = CreateUnsecuredObjectPool(creationFunc, buttonReseter)
+function ButtonPool:EnumerateInactive() return ipairs(self.inactiveObjects); end
 
 -- Reimpl aquire to always call resetter.
 local aquireButton = ButtonPool.Acquire
@@ -470,13 +470,13 @@ function ButtonPool:SetActive(button)
   if not self:IsActive(button) then
     -- iterate inactive for a button match.
     -- update self
-      -- .(inactiveObjects, activeObjects, numActiveObjects)
+      -- .(inactiveObjects, activeObjects, activeObjectCount)
     -- inactive should retain sequntial key indexes ie array.
     local inactive = {}
     for _, inactiveButton in ipairs(self.inactiveObjects) do
       if button == inactiveButton then
         tinsert(self.activeObjects, inactiveButton)
-        self.numActiveObjects = self.numActiveObjects + 1
+        self.activeObjectCount = self.activeObjectCount + 1
       else
         tinsert(inactive, inactiveButton)
       end
